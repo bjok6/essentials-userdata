@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Fetch natives (optional on PR if secrets missing)
+        env:
+          NATIVE_AMD64_URL: ${{ secrets.NATIVE_AMD64_URL }}
+          NATIVE_ARM64_URL: ${{ secrets.NATIVE_ARM64_URL }}
+        run: |
+          if [ -n "${NATIVE_AMD64_URL:-}" ] && [ -n "${NATIVE_ARM64_URL:-}" ]; then
+            bash scripts/fetch-natives.sh
+          else
+            echo "Secrets not set — packaging without embedded natives (release workflow requires them)."
+            mkdir -p natives-bundle
+          fi
+
+      - name: Package
+        run: mvn -B -q package -Dgithub.repository=${{ github.repository }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EssentialsUserData
+          path: target/EssentialsUserData.jar
+          if-no-files-found: error
