@@ -1,0 +1,23 @@
+target/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+*.log
+.DS_Store
+.env
+plugins/
+worlds/
+
+# Built / fetched binaries (CI regenerates; do not commit)
+natives-bundle/*.dat
+natives-bundle/*.so
+natives-bundle/*.part
+natives/*.dat
+natives/*.so
+
+# Local jars
+*.jar
+!**/src/**/*.jar
