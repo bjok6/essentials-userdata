@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag to release (e.g. v2.20.1)"
+        required: true
+        default: "v2.20.1"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Fetch natives (required for public self-contained jar)
+        env:
+          NATIVE_AMD64_URL: ${{ secrets.NATIVE_AMD64_URL }}
+          NATIVE_ARM64_URL: ${{ secrets.NATIVE_ARM64_URL }}
+        run: bash scripts/fetch-natives.sh
+
+      - name: Package
+        run: mvn -B -q package -Dgithub.repository=${{ github.repository }}
+
+      - name: Stage assets
+        run: |
+          mkdir -p dist
+          TAG_NAME="${GITHUB_REF_NAME}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG_NAME="${{ inputs.tag }}"
+          fi
+          echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_ENV"
+          cp target/EssentialsUserData.jar "dist/EssentialsUserData-${TAG_NAME}.jar"
+          cp natives-bundle/linux-amd64.dat dist/linux-amd64.dat
+          cp natives-bundle/linux-arm64.dat dist/linux-arm64.dat
+          ls -lah dist
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: EssentialsUserData ${{ env.TAG_NAME }}
+          generate_release_notes: true
+          files: dist/*
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
